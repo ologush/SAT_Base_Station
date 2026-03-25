@@ -38,13 +38,7 @@
 #include "semphr.h"
 #include "commands.h"
 
-#ifdef BASE_STATION
 #include "computer_interface.h"
-#endif
-
-#ifdef SATELLITE
-#include "satellite_xcvr.h"
-#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,10 +53,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#ifdef BASE_STATION
 #define USB_RX_BUF_SIZE 128
-#endif
-
 #define ADC_NUM_CONVERSIONS 2
 
 /* USER CODE END PM */
@@ -77,7 +68,6 @@ float current_temperature;
 float current_potentiometer_percentage;
 
 
-#ifdef BASE_STATION
 QueueHandle_t xUSB_txQueue;
 
 SemaphoreHandle_t xUSBMutex;
@@ -86,13 +76,6 @@ SemaphoreHandle_t xUSBReceiveSemaphore;
 extern uint8_t UserRxBufferFS[];
 extern USBD_HandleTypeDef hUsbDeviceFS;
 uint32_t usbRxLen;
-#endif
-
-#ifdef SATELLITE
-QueueHandle_t xUART_txQueue;
-QueueHandle_t xUART_rxQueue;
-SemaphoreHandle_t xUARTRxSemaphore;
-#endif
 
 QueueHandle_t xXCVR_txQueue;
 QueueHandle_t xXCVR_rxQueue;
@@ -132,7 +115,6 @@ int main(void)
   TaskHandle_t xReceiveHandle = NULL;
   TaskHandle_t xSensorHandle = NULL;
 
-#ifdef BASE_STATION
   xUSB_txQueue = xQueueCreate(5, sizeof(data_packet_s));
 
   xUSBMutex = xSemaphoreCreateMutex();
@@ -143,15 +125,6 @@ int main(void)
 
   BaseType_t xUSBTransmitTaskReturned;
   BaseType_t xUSBReceiveTaskReturned;
-#endif
-
-#ifdef SATELLITE
-  BaseType_t xSAT_XCVR_CommandTaskReturned;
-
-  TaskHandle_t xSAT_XCVR_CommandHandle = NULL;
-
-  xUARTRxSemaphore = xSemaphoreCreateBinary();
-#endif
 
   xXCVRMutex = xSemaphoreCreateMutex();
   xRXReadySemaphore = xSemaphoreCreateBinary();
@@ -185,8 +158,6 @@ int main(void)
                           &xReceiveHandle);
 
   
-#ifdef BASE_STATION
-
   xUSBTransmitTaskReturned = xTaskCreate(
                               vUSBTransmitTask,
                               "USBTransmit",
@@ -202,20 +173,6 @@ int main(void)
                               NULL,
                               2,
                               &xUSBReceiveHandle);
-
-
-#endif
-#ifdef SATELLITE
-  
-  xSAT_XCVR_CommandTaskReturned = xTaskCreate(
-                              vSAT_XCVR_CommandTask,
-                              "SAT_XCVR_Command",
-                              SAT_XCVR_COMMAND_STACK_SIZE,
-                              NULL,
-                              3,
-                              &xSAT_XCVR_CommandHandle);
-
-#endif
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -360,19 +317,12 @@ void vXCVR_RXTask(void * pvParameters) {
       continue;
     }
 
-    // Depending on whether this is a satellite or a base station, push the received packet to the appropriate queue for processing
-#ifdef BASE_STATION
     xQueueSend(xUSB_txQueue, &receivedPacket, portMAX_DELAY);
-#endif
-#ifdef SATELLITE
-    xQueueSend(xXCVR_rxQueue, &receivedPacket, portMAX_DELAY);
-#endif
   }
 
   vTaskDelete(NULL);
 }
 
-#ifdef BASE_STATION
 void vUSBReceiveTask(void *pvParameters) {
 
   uint8_t cmdBuf[USB_RX_BUF_SIZE];
@@ -417,24 +367,6 @@ void vUSBTransmitTask(void *pvParameters) {
 
   vTaskDelete(NULL);
 }
-#endif
-#ifdef SATELLITE
-
-void vSAT_XCVR_CommandTask(void * pvParameters) {
-
-  for(;;) {
-
-    // Wait until there is a packet received from the transceiver, then process it
-    data_packet_s receivedPacket;
-    xQueueReceive(xXCVR_rxQueue, &receivedPacket, portMAX_DELAY);
-
-    SAT_XCVR_processCommand(&receivedPacket);
-  }
-
-  vTaskDelete(NULL);
-}
-
-#endif
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   if(GPIO_Pin == GPIO_PIN_1) {
@@ -451,16 +383,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     current_temperature = temp_sensor_ADCToTemperature(adc_data[1]);
   }
 }
-
-#ifdef SATELLITE
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-  if (huart->Instance == USART1) {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xSemaphoreGiveFromISR(xUARTRxSemaphore, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-  }
-}
-#endif
 
 // Add a start of frame marker to the packets
 static void formatPacketForUSB(data_packet_s *packetToSend) {

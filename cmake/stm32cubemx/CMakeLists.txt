@@ -6,10 +6,9 @@ add_library(stm32cubemx INTERFACE)
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
 
-target_compile_definitions(stm32cubemx INTERFACE 
-	USE_HAL_DRIVER 
+target_compile_definitions(stm32cubemx INTERFACE
+	USE_HAL_DRIVER
 	STM32F302xC
-    BASE_STATION
     $<$<CONFIG:Debug>:DEBUG>
 )
 
@@ -40,7 +39,6 @@ target_sources(stm32cubemx INTERFACE
     ../../Core/Src/temp_sensor.c
     ../../Core/Src/potentiometer.c
     ../../Core/Src/computer_interface.c
-    ../../Core/Src/satellite_xcvr.c
     ../../Core/Src/helpers.c
     ../../Core/Src/dma.c
     ../../Core/Src/tim.c
