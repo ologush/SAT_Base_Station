@@ -6,8 +6,8 @@ add_library(stm32cubemx INTERFACE)
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
 
-target_compile_definitions(stm32cubemx INTERFACE
-	USE_HAL_DRIVER
+target_compile_definitions(stm32cubemx INTERFACE 
+	USE_HAL_DRIVER 
 	STM32F302xC
     $<$<CONFIG:Debug>:DEBUG>
 )
@@ -33,8 +33,8 @@ target_sources(stm32cubemx INTERFACE
     ../../Core/Src/gpio.c
     ../../Core/Src/freertos.c
     ../../Core/Src/adc.c
+    ../../Core/Src/dma.c
     ../../Core/Src/spi.c
-    ../../Core/Src/usart.c
     ../../Core/Src/transceiver.c
     ../../Core/Src/temp_sensor.c
     ../../Core/Src/potentiometer.c
@@ -71,8 +71,6 @@ target_sources(stm32cubemx INTERFACE
     ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_adc_ex.c
     ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_spi.c
     ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_spi_ex.c
-    ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_uart.c
-    ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_uart_ex.c
     ../../Core/Src/system_stm32f3xx.c
     ../../Middlewares/Third_Party/FreeRTOS/Source/croutine.c
     ../../Middlewares/Third_Party/FreeRTOS/Source/event_groups.c
