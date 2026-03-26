@@ -390,6 +390,7 @@ static void formatPacketForUSB(data_packet_s *packetToSend) {
 
   memcpy(&newPacket[2], packetToSend->payload, packetToSend->length);
   memcpy(packetToSend->payload, newPacket, packetToSend->length + 2);
+  packetToSend->length += 2;
 
 }
 /* USER CODE END 4 */
